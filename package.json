@@ -1,0 +1,71 @@
+{
+  "name": "env-mask",
+  "displayName": "Env Mask",
+  "description": "Hide .env secret values by default",
+  "version": "0.0.1",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:dotenv",
+    "workspaceContains:**/.env*"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "dotenv",
+        "aliases": [
+          "Dotenv",
+          "env"
+        ],
+        "extensions": [
+          ".env"
+        ],
+        "filenamePatterns": [
+          ".env.*"
+        ]
+      }
+    ],
+    "configuration": {
+      "title": "Env Mask",
+      "properties": {
+        "envMask.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable env value masking"
+        },
+        "envMask.maskChar": {
+          "type": "string",
+          "default": "•",
+          "description": "Character used to mask hidden values"
+        },
+        "envMask.maskLength": {
+          "type": "number",
+          "default": 8,
+          "minimum": 1,
+          "description": "Number of mask characters shown for hidden values"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "npm run compile && node ./out/test/envParser.test.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.15.21",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.3.2",
+    "mocha": "^11.5.0",
+    "typescript": "^5.8.3"
+  }
+}
