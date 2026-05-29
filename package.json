@@ -31,6 +31,24 @@
         ]
       }
     ],
+    "commands": [
+      {
+        "command": "envMask.copyValue",
+        "title": "Env Mask: Copy Value"
+      },
+      {
+        "command": "envMask.showValue",
+        "title": "Env Mask: Show Value"
+      },
+      {
+        "command": "envMask.hideValue",
+        "title": "Env Mask: Hide Value"
+      },
+      {
+        "command": "envMask.editValue",
+        "title": "Env Mask: Edit Value"
+      }
+    ],
     "configuration": {
       "title": "Env Mask",
       "properties": {
