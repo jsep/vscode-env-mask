@@ -122,3 +122,13 @@ function parseValue(
 export function stateKey(uri: string, lineNumber: number, key: string): string {
   return `${uri}:${lineNumber}:${key}`;
 }
+
+export function encodeEnvValue(decodedValue: string, quoteStyle: QuoteStyle): string {
+  if (quoteStyle === '"') {
+    return `"${decodedValue}"`;
+  }
+  if (quoteStyle === "'") {
+    return `'${decodedValue}'`;
+  }
+  return decodedValue;
+}

@@ -9,6 +9,7 @@ function toRange(range: TextRange): vscode.Range {
 
 export class DecorationProvider implements vscode.Disposable {
   private readonly maskDecorationType: vscode.TextEditorDecorationType;
+  private readonly revealDecorationType: vscode.TextEditorDecorationType;
   private readonly disposables: vscode.Disposable[] = [];
 
   constructor(private readonly maskController: MaskController) {
@@ -21,8 +22,18 @@ export class DecorationProvider implements vscode.Disposable {
       rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
     });
 
+    this.revealDecorationType = vscode.window.createTextEditorDecorationType({
+      color: new vscode.ThemeColor('editor.foreground'),
+      letterSpacing: '0',
+      textDecoration: 'none',
+      rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+    });
+
+    this.refreshAllVisible();
+
     this.disposables.push(
       vscode.window.onDidChangeActiveTextEditor((editor) => this.refresh(editor)),
+      vscode.window.onDidChangeVisibleTextEditors((editors) => this.refreshEditors(editors)),
       vscode.workspace.onDidChangeTextDocument((event) => {
         for (const editor of vscode.window.visibleTextEditors) {
           if (editor.document === event.document) {
@@ -31,15 +42,16 @@ export class DecorationProvider implements vscode.Disposable {
         }
       }),
       vscode.workspace.onDidOpenTextDocument((document) => {
-        const editor = vscode.window.visibleTextEditors.find((e) => e.document === document);
-        if (editor) {
-          this.apply(editor);
+        for (const editor of vscode.window.visibleTextEditors) {
+          if (editor.document === document) {
+            this.apply(editor);
+          }
         }
       }),
       vscode.workspace.onDidCloseTextDocument((document) => this.maskController.clearDocument(document.uri)),
       vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration('envMask')) {
-          this.refresh();
+          this.refreshAllVisible();
         }
       })
     );
@@ -50,38 +62,61 @@ export class DecorationProvider implements vscode.Disposable {
       this.apply(editor);
       return;
     }
-    for (const visible of vscode.window.visibleTextEditors) {
-      this.apply(visible);
+    this.refreshAllVisible();
+  }
+
+  private refreshAllVisible(): void {
+    this.refreshEditors(vscode.window.visibleTextEditors);
+  }
+
+  private refreshEditors(editors: readonly vscode.TextEditor[]): void {
+    for (const editor of editors) {
+      this.apply(editor);
     }
   }
 
   private apply(editor: vscode.TextEditor): void {
-    if (!isEnvDocument(editor.document) || !this.isEnabled()) {
+    if (!isEnvDocument(editor.document)) {
       editor.setDecorations(this.maskDecorationType, []);
+      editor.setDecorations(this.revealDecorationType, []);
       return;
     }
 
-    const maskText = this.maskText();
-    const decorations: vscode.DecorationOptions[] = [];
+    const parsedLines = parseEnvTextDocument(editor.document);
 
-    for (const parsed of parseEnvTextDocument(editor.document)) {
-      if (!this.maskController.isHidden(editor.document.uri, parsed.lineNumber, parsed.key)) {
+    if (!this.isEnabled()) {
+      editor.setDecorations(
+        this.revealDecorationType,
+        parsedLines.map((parsed) => ({ range: toRange(parsed.valueRange) }))
+      );
+      editor.setDecorations(this.maskDecorationType, []);
+      return;
+    }
+    const maskText = this.maskText();
+    const masked: vscode.DecorationOptions[] = [];
+    const revealed: vscode.DecorationOptions[] = [];
+
+    for (const parsed of parsedLines) {
+      const range = toRange(parsed.valueRange);
+      if (this.maskController.isHidden(editor.document.uri, parsed.lineNumber, parsed.key)) {
+        masked.push({
+          range,
+          renderOptions: {
+            before: {
+              contentText: maskText,
+              color: new vscode.ThemeColor('editor.foreground'),
+              textDecoration: 'none',
+            },
+          },
+        });
         continue;
       }
 
-      decorations.push({
-        range: toRange(parsed.valueRange),
-        renderOptions: {
-          before: {
-            contentText: maskText,
-            color: new vscode.ThemeColor('editor.foreground'),
-            textDecoration: 'none',
-          },
-        },
-      });
+      revealed.push({ range });
     }
 
-    editor.setDecorations(this.maskDecorationType, decorations);
+    editor.setDecorations(this.maskDecorationType, masked);
+    editor.setDecorations(this.revealDecorationType, revealed);
   }
 
   private isEnabled(): boolean {
@@ -97,6 +132,7 @@ export class DecorationProvider implements vscode.Disposable {
 
   dispose(): void {
     this.maskDecorationType.dispose();
+    this.revealDecorationType.dispose();
     for (const disposable of this.disposables) {
       disposable.dispose();
     }

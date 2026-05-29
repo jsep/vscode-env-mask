@@ -5,7 +5,7 @@ import { registerShowHideValue } from './commands/showHideValue';
 import { CopyFeedback } from './copyFeedback';
 import { DecorationProvider } from './decorationProvider';
 import { EnvCodeLensProvider } from './envCodeLensProvider';
-import { isEnvDocument } from './envDocument';
+import { clearParseCache, isEnvDocument } from './envDocument';
 import { MaskSelectionGuard } from './maskSelectionGuard';
 import { MaskController } from './maskController';
 
@@ -15,8 +15,6 @@ export function activate(context: vscode.ExtensionContext): void {
   const decorationProvider = new DecorationProvider(maskController);
   const selectionGuard = new MaskSelectionGuard(maskController);
   const codeLensProvider = new EnvCodeLensProvider(maskController, copyFeedback);
-
-  decorationProvider.refresh();
 
   context.subscriptions.push(
     decorationProvider,
@@ -28,12 +26,15 @@ export function activate(context: vscode.ExtensionContext): void {
       if (isEnvDocument(event.document)) {
         codeLensProvider.refresh();
       }
+    }),
+    vscode.workspace.onDidCloseTextDocument((document) => {
+      clearParseCache(document.uri);
     })
   );
 
   registerCopyValue(context, copyFeedback, codeLensProvider);
   registerShowHideValue(context, maskController, decorationProvider, codeLensProvider);
-  registerEditValue(context);
+  registerEditValue(context, decorationProvider, codeLensProvider);
 }
 
 export function deactivate(): void {}

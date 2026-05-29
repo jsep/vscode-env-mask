@@ -11,8 +11,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:dotenv",
-    "workspaceContains:**/.env*"
+    "*"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -31,6 +30,25 @@
         ]
       }
     ],
+    "grammars": [
+      {
+        "language": "dotenv",
+        "scopeName": "source.envmask.dotenv",
+        "path": "./syntaxes/dotenv.tmLanguage.json"
+      }
+    ],
+    "configurationDefaults": {
+      "editor.tokenColorCustomizations": {
+        "textMateRules": [
+          {
+            "scope": "variable.other.envmask.value",
+            "settings": {
+              "foreground": "#00000000"
+            }
+          }
+        ]
+      }
+    },
     "commands": [
       {
         "command": "envMask.copyValue",

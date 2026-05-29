@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { CopyFeedback } from '../copyFeedback';
 import { EnvCodeLensProvider } from '../envCodeLensProvider';
-import { getDecodedValue } from '../envDocument';
+import { findOpenDocument, getDecodedValue } from '../envDocument';
 import { EnvKeyArgs, reviveEnvKeyArgs } from './envKeyArgs';
 
 export function registerCopyValue(
@@ -10,15 +10,37 @@ export function registerCopyValue(
   codeLensProvider: EnvCodeLensProvider
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('envMask.copyValue', async (args: EnvKeyArgs) => {
+    vscode.commands.registerCommand('envMask.copyValue', (args: EnvKeyArgs) => {
       const { uri, line, key } = reviveEnvKeyArgs(args);
-      const document = await vscode.workspace.openTextDocument(uri);
+      const document = findOpenDocument(uri);
+      if (!document) {
+        void copyFromClosedDocument(args, copyFeedback, codeLensProvider);
+        return;
+      }
+
       const value = getDecodedValue(document, line, key);
       if (value === undefined) {
         return;
       }
-      await vscode.env.clipboard.writeText(value);
+
       copyFeedback.markCopied(uri.toString(), line, key, () => codeLensProvider.refresh());
+      void vscode.env.clipboard.writeText(value);
     })
   );
+}
+
+async function copyFromClosedDocument(
+  args: EnvKeyArgs,
+  copyFeedback: CopyFeedback,
+  codeLensProvider: EnvCodeLensProvider
+): Promise<void> {
+  const { uri, line, key } = reviveEnvKeyArgs(args);
+  const document = await vscode.workspace.openTextDocument(uri);
+  const value = getDecodedValue(document, line, key);
+  if (value === undefined) {
+    return;
+  }
+
+  copyFeedback.markCopied(uri.toString(), line, key, () => codeLensProvider.refresh());
+  await vscode.env.clipboard.writeText(value);
 }

@@ -1,6 +1,6 @@
 # 07 — Edit value
 
-**Status:** pending  
+**Status:** done  
 **Spec:** Edit overlay, Decisions #5 #6  
 **Success criteria:** #5, #6
 
@@ -10,21 +10,21 @@ Edit a single env value via input overlay; only the value segment is written on 
 
 ## Requirements
 
-- [ ] Command `envMask.editValue` with args `{ uri, line, key }`
-- [ ] UI: `showInputBox` (v1 minimum) pre-filled with `decodedValue`
-- [ ] Submit (Enter): `WorkspaceEdit` replaces **value range only** (not whole line)
-- [ ] Re-quote on save if original had `quoteStyle` (`"` or `'`)
-- [ ] Cancel (Esc): no file change
-- [ ] Works whether key is hidden or revealed
-- [ ] After save: re-parse line, keep hidden/revealed state, refresh decorations + CodeLens
-- [ ] No edit auth / password (v1)
+- [x] Command `envMask.editValue` with args `{ uri, line, key }`
+- [x] UI: `showInputBox` (v1 minimum) pre-filled with `decodedValue`
+- [x] Submit (Enter): `WorkspaceEdit` replaces **value range only** (not whole line)
+- [x] Re-quote on save if original had `quoteStyle` (`"` or `'`)
+- [x] Cancel (Esc): no file change
+- [x] Works whether key is hidden or revealed
+- [x] After save: re-parse line, keep hidden/revealed state, refresh decorations + CodeLens
+- [x] No edit auth / password (v1)
 
-## Files (planned)
+## Files
 
 | File | Role |
 |------|------|
 | `src/commands/editValue.ts` | Input + WorkspaceEdit |
-| `src/envParser.ts` | `quoteStyle` for re-quoting |
+| `src/envParser.ts` | `encodeEnvValue` for re-quoting |
 
 ## Verify
 

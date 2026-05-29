@@ -1,5 +1,5 @@
 import * as assert from 'node:assert/strict';
-import { parseEnvLine } from '../envParser';
+import { encodeEnvValue, parseEnvLine } from '../envParser';
 
 function test(name: string, fn: () => void): void {
   try {
@@ -61,6 +61,12 @@ test('parses empty value', () => {
   assert.ok(parsed);
   assert.equal(parsed.rawValue, '');
   assert.equal(parsed.decodedValue, '');
+});
+
+test('encodeEnvValue preserves quoting', () => {
+  assert.equal(encodeEnvValue('plain', null), 'plain');
+  assert.equal(encodeEnvValue('quoted value', '"'), '"quoted value"');
+  assert.equal(encodeEnvValue('single', "'"), "'single'");
 });
 
 console.log('All parser tests passed.');
